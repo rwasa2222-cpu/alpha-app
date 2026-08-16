@@ -1,0 +1,23 @@
+{
+	"appId": "com.alpha.podcastfactory",
+	"appName": "ALPHA",
+	"webDir": "dist",
+	"android": {
+		"allowMixedContent": false,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": false
+	},
+	"plugins": {
+		"StatusBar": {
+			"style": "dark",
+			"backgroundColor": "#000000",
+			"overlaysWebView": true
+		},
+		"SplashScreen": {
+			"launchShowDuration": 1500,
+			"backgroundColor": "#000000",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP"
+		}
+	}
+}

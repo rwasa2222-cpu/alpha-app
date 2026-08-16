@@ -1,0 +1,6 @@
+*.db
+__pycache__/
+*.py[cod]
+.env
+assets/storage/
+assets/audio/

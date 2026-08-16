@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ALPHA</string>
+    <string name="title_activity_main">ALPHA</string>
+    <string name="package_name">com.alpha.podcastfactory</string>
+    <string name="custom_url_scheme">com.alpha.podcastfactory</string>
+</resources>
