@@ -28,8 +28,10 @@ jobs:
           node-version: '20'
          
       - name: Install frontend dependencies
-       
+        working-directory: alpha-app
         run: npm install
+
+
 
 
       - name: Build web assets (Capacitor production config)
