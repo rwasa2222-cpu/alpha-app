@@ -20,8 +20,7 @@ jobs:
       # ── 1. Source ──────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-         path: alpha-app
+        
 
 
       # ── 2. Node (web assets) ──────────────────────────────────────────────
@@ -33,19 +32,17 @@ jobs:
           node-version: '20'
          
       - name: Install frontend dependencies
-        working-directory: alpha-app
+        
         run: npm install
 
 
       - name: Build web assets (Capacitor production config)
-        working-directory: alpha-app
-
+        
         run: npm run build:capacitor
 
       # ── 3. Capacitor sync ─────────────────────────────────────────────────
       - name: Sync web assets into Android project
-        working-directory: alpha-app
-
+        
         run: npx cap sync android --inline
 
       # ── 4. Java / Android SDK ─────────────────────────────────────────────
