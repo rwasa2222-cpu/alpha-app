@@ -28,16 +28,16 @@ jobs:
           node-version: '20'
          
       - name: Install frontend dependencies
-        working-directory: artifacts/mockup-sandbox
+       
         run: npm ci
 
       - name: Build web assets (Capacitor production config)
-        working-directory: artifacts/mockup-sandbox
+       
         run: npm run build:capacitor
 
       # ── 3. Capacitor sync ─────────────────────────────────────────────────
       - name: Sync web assets into Android project
-        working-directory: artifacts/mockup-sandbox
+       
         run: npx cap sync android --inline
 
       # ── 4. Java / Android SDK ─────────────────────────────────────────────
