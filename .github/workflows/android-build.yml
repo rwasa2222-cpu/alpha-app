@@ -1,0 +1,107 @@
+name: Android APK Build
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'artifacts/mockup-sandbox/**'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'artifacts/mockup-sandbox/**'
+  workflow_dispatch:          # lets you trigger a build manually from GitHub UI
+
+jobs:
+  build-apk:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Source ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node (web assets) ──────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: artifacts/mockup-sandbox/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: artifacts/mockup-sandbox
+        run: npm ci
+
+      - name: Build web assets (Capacitor production config)
+        working-directory: artifacts/mockup-sandbox
+        run: npm run build:capacitor
+
+      # ── 3. Capacitor sync ─────────────────────────────────────────────────
+      - name: Sync web assets into Android project
+        working-directory: artifacts/mockup-sandbox
+        run: npx cap sync android --inline
+
+      # ── 4. Java / Android SDK ─────────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licences
+        run: yes | sdkmanager --licenses || true
+
+      # Gradle reads local.properties for sdk.dir; write it from the CI env var
+      - name: Write local.properties
+        working-directory: artifacts/mockup-sandbox/android
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      # ── 5. Gradle build ───────────────────────────────────────────────────
+      - name: Make Gradle wrapper executable
+        working-directory: artifacts/mockup-sandbox/android
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('artifacts/mockup-sandbox/android/**/*.gradle*', 'artifacts/mockup-sandbox/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Build debug APK
+        working-directory: artifacts/mockup-sandbox/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+
+      # ── 6. Upload artifact ────────────────────────────────────────────────
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-debug-${{ github.run_number }}
+          path: artifacts/mockup-sandbox/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      # ── 7. Build summary ──────────────────────────────────────────────────
+      - name: Print APK info
+        if: success()
+        run: |
+          APK=artifacts/mockup-sandbox/android/app/build/outputs/apk/debug/app-debug.apk
+          SIZE=$(du -sh "$APK" | cut -f1)
+          echo "### ✅ ALPHA debug APK built successfully" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| File | app-debug.apk |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Min SDK | 31 (Android 12) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Target SDK | 34 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Run | #${{ github.run_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the APK from the **Artifacts** section of this workflow run." >> $GITHUB_STEP_SUMMARY
